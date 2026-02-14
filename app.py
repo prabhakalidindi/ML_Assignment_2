@@ -49,3 +49,65 @@ try:
     scaler = joblib.load('model/scaler.pkl')
     le = joblib.load('model/label_encoder.pkl')
 except Exception as e:
+    st.error(f"Error loading models. Make sure .pkl files are uploaded. Details: {e}")
+    st.stop()
+
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    st.write("### 1. Data Preview")
+    st.dataframe(df.head(3))
+    
+    # Preprocessing
+    if 'Class' in df.columns:
+        y_true_names = df['Class']
+        try:
+            y_true = le.transform(y_true_names)
+        except:
+             st.warning("Unknown labels in uploaded file. Skipping evaluation metrics.")
+             y_true = None
+        X_input = df.drop(columns=['Class'])
+    else:
+        y_true = None
+        X_input = df
+        
+    # Scale if needed
+    if model_name in ["Logistic Regression", "KNN"]:
+        try:
+            X_processed = scaler.transform(X_input)
+        except:
+             st.error("Feature mismatch! Please ensure columns match training data.")
+             st.stop()
+    else:
+        X_processed = X_input
+
+    # Predict
+    if st.button("Run Classification"):
+        preds = model.predict(X_processed)
+        pred_names = le.inverse_transform(preds)
+        
+        # Metrics
+        if y_true is not None:
+            st.write(f"### 2. Evaluation Metrics ({model_name})")
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Accuracy", f"{accuracy_score(y_true, preds):.4f}")
+            c2.metric("Precision (W)", f"{precision_score(y_true, preds, average='weighted'):.4f}")
+            c3.metric("Recall (W)", f"{recall_score(y_true, preds, average='weighted'):.4f}")
+            c4.metric("F1 Score (W)", f"{f1_score(y_true, preds, average='weighted'):.4f}")
+            
+            # Confusion Matrix
+            st.write("### 3. Confusion Matrix")
+            fig, ax = plt.subplots(figsize=(8, 5))
+            cm = confusion_matrix(y_true, preds)
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Greens', 
+                        xticklabels=le.classes_, yticklabels=le.classes_)
+            plt.ylabel('Actual')
+            plt.xlabel('Predicted')
+            st.pyplot(fig)
+            
+        # Results
+        st.write("### 4. Prediction Results")
+        res_df = X_input.copy()
+        res_df['Predicted_Bean'] = pred_names
+        st.dataframe(res_df)
+else:
+    st.info("👋 Upload a CSV file or download `sample_test_data.csv` from the sidebar to begin.")
