@@ -9,7 +9,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, r
 st.set_page_config(page_title="Dry Bean Classifier", layout="wide")
 
 st.title("🌱 Dry Bean Variety Classifier")
-st.markdown("M.Tech (AIML) Assignment 2 | **Predicting 7 different bean types**")
+st.markdown("**Predicting 7 different bean types**")
 
 # --- SIDEBAR ---
 st.sidebar.header("1. Configuration")
