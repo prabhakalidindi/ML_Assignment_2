@@ -32,7 +32,7 @@ The following 6 classification models were implemented and compared:
 ## 5. Observations
 - **Logistic Regression** and **Random Forest** achieved the highest accuracy (~92.7%), proving that both linear and ensemble methods are effective for this structured dataset.
 - **XGBoost** followed closely with ~92.4% accuracy, showing strong capability in handling complex boundaries.
-- **Naive Bayes** had the lowest performance (~75.8%), likely because the morphological features (like Area and Perimeter) are highly correlated, which violates the model's "independence" assumption.
+- **Naive Bayes** had the lowest performance (~75.8%), likely because the features like Area and Perimeter are highly correlated, which violates the model's "independence" assumption.
 - **Decision Tree** showed lower accuracy (~88.9%) compared to the ensemble methods, suggesting it may have slightly overfitted the training data.
 
 ## 6. Deployment
