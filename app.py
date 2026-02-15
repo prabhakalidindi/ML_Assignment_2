@@ -3,13 +3,21 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import (
+    confusion_matrix, 
+    accuracy_score, 
+    precision_score, 
+    recall_score, 
+    f1_score, 
+    roc_auc_score, 
+    matthews_corrcoef
+)
 
 # Page Configuration
 st.set_page_config(page_title="Dry Bean Classifier", layout="wide")
 
 st.title("🌱 Dry Bean Variety Classifier")
-st.markdown("**Predicting 7 different bean types**")
+st.markdown("M.Tech (AIML) Assignment 2 | **Predicting 7 different bean types**")
 
 # --- SIDEBAR ---
 st.sidebar.header("1. Configuration")
@@ -23,11 +31,13 @@ st.sidebar.markdown("Don't have data? Download the sample dataset used for evalu
 # Helper to load the CSV for the download button
 @st.cache_data
 def load_test_data():
-    # Reads 'sample_test_data.csv' from the local directory
-    return pd.read_csv("sample_test_data.csv").to_csv(index=False).encode('utf-8')
+    try:
+        return pd.read_csv("sample_test_data.csv").to_csv(index=False).encode('utf-8')
+    except FileNotFoundError:
+        return None
 
-try:
-    csv_data = load_test_data()
+csv_data = load_test_data()
+if csv_data:
     st.sidebar.download_button(
         label="📥 Download sample_test_data.csv",
         data=csv_data,
@@ -35,7 +45,7 @@ try:
         mime="text/csv",
         help="Click to download the sample dataset to verify the model."
     )
-except FileNotFoundError:
+else:
     st.sidebar.warning("sample_test_data.csv not found in repo.")
 
 # --- FILE UPLOAD ---
@@ -83,16 +93,30 @@ if uploaded_file:
     # Predict
     if st.button("Run Classification"):
         preds = model.predict(X_processed)
+        probs = model.predict_proba(X_processed)  # Required for AUC
         pred_names = le.inverse_transform(preds)
         
-        # Metrics
+        # Metrics Display [Requirement: Display all 6 evaluation metrics]
         if y_true is not None:
             st.write(f"### 2. Evaluation Metrics ({model_name})")
-            c1, c2, c3, c4 = st.columns(4)
+            
+            # Row 1
+            c1, c2, c3 = st.columns(3)
             c1.metric("Accuracy", f"{accuracy_score(y_true, preds):.4f}")
             c2.metric("Precision (W)", f"{precision_score(y_true, preds, average='weighted'):.4f}")
             c3.metric("Recall (W)", f"{recall_score(y_true, preds, average='weighted'):.4f}")
+            
+            # Row 2
+            c4, c5, c6 = st.columns(3)
             c4.metric("F1 Score (W)", f"{f1_score(y_true, preds, average='weighted'):.4f}")
+            # AUC requires multi_class='ovr' for multiclass problems
+            try:
+                auc = roc_auc_score(y_true, probs, multi_class='ovr', average='weighted')
+                c5.metric("AUC Score", f"{auc:.4f}")
+            except:
+                c5.metric("AUC Score", "N/A")
+            
+            c6.metric("MCC Score", f"{matthews_corrcoef(y_true, preds):.4f}")
             
             # Confusion Matrix
             st.write("### 3. Confusion Matrix")
